@@ -1,27 +1,37 @@
 <?php
 header('Content-Type: application/json');
 
-// Sambungan ke database
-$host = "localhost";
-$user = "root";
-$password = ""; // Kosong je
-$database = "testinfobip";
+// Dapatkan Authorization header dari request
+$headers = getallheaders();
+$apiKey = isset($headers['Authorization']) ? $headers['Authorization'] : '';
 
-// Sambung ke MySQL
-$conn = new mysqli($host, $user, $password, $database);
+// API key sebenar
+$validKey = 'amotuV1feCcVomSDuIBb92DQd60uUN4wCVgA';
 
-// Semak sambungan
-if ($conn->connect_error) {
-    http_response_code(500);
-    echo json_encode(["error" => "Database connection failed: " . $conn->connect_error]);
+// Semak API key
+if ($apiKey !== 'Bearer ' . $validKey) {
+    http_response_code(401);
+    echo json_encode(["error" => "Unauthorized: Invalid API Key"]);
     exit();
 }
 
-// SQL Query - ambil semua jawatan yang 'open'
+// Sambungan ke database
+$host = "localhost";
+$user = "root";
+$password = ""; // kosong je
+$database = "testinfobip";
+
+$conn = new mysqli($host, $user, $password, $database);
+
+if ($conn->connect_error) {
+    http_response_code(500);
+    echo json_encode(["error" => "Database connection failed"]);
+    exit();
+}
+
 $sql = "SELECT position, location FROM jobs WHERE status = 'open'";
 $result = $conn->query($sql);
 
-// Simpan data ke dalam array
 $jobs = [];
 
 if ($result->num_rows > 0) {
@@ -32,6 +42,5 @@ if ($result->num_rows > 0) {
     $jobs[] = ["message" => "Tiada jawatan tersedia buat masa ini"];
 }
 
-// Papar sebagai JSON
 echo json_encode($jobs);
 ?>
